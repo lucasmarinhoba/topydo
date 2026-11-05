@@ -1,0 +1,5 @@
+(A) 2026-10-01 Entregar relatório da Atividade 03 +Faculdade @computador due:2026-10-15
+(B) 2026-11-01 Implementar testes no topydo +Faculdade @estudos due:2026-11-10
+x 2026-10-20 Estudar estrutura de comandos do topydo +Faculdade @leitura
+Comprar café e lanche +Pessoal @mercado
+(C) Pagar fatura do cartão +Pessoal @financas due:2026-10-25
