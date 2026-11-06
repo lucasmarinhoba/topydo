@@ -4,8 +4,9 @@
 **Repositório do Fork:** [lucasmarinhoba/topydo](https://github.com/lucasmarinhoba/topydo)  
 **Branch de Trabalho:** `master`  
 **Commit Inicial de Referência (Upstream):** `37eba58`  
-**Autor:** Lucas Marinho  
-**Disciplina:** Tópicos Avançados em Engenharia de Software — Prof. Andrei Formiga  
+**Grupo**: Guilherme Peixoto Gurgel, João Pedro Figueiredo Chaves, Lucas Marinho
+Basilio de Sousa, Yuri Silva Bezerra de Lima
+**Disciplina:** Tópicos Avançados em Ciência da Computação — Prof. Andrei Formiga  
 
 ---
 
