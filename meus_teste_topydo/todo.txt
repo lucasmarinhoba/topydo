@@ -1,0 +1,10 @@
+(A) 2026-10-01 Entregar relatório da Atividade 03 +Faculdade @computador due:2026-10-15 id:1
+(B) 2026-11-01 Implementar testes e comandos no topydo +Faculdade @estudos due:2026-11-10 p:1
+Comprar café e suprimentos para o laboratório +Pessoal @mercado cost:45
+x 2026-11-06 Pagar fatura do cartão de crédito +Pessoal @financas due:2026-10-25 nota:urgente
+(B) 2026-11-03 Preparar slides da apresentação +Faculdade @computador due:2026-11-25
+Revisar documentação técnica do sistema +Trabalho @escritorio t:2026-11-01 due:2026-11-30 id:2
+Atualizar dependências do repositório no fork +OpenSource @computador due:2026-11-15 p:2
+Agendar consulta médica de rotina +Pessoal @saude
+Tarefa oculta de rascunho interno h:1
+(A) 2026-11-06 Minha nova tarefa de teste +Faculdade @computador due:2026-11-20

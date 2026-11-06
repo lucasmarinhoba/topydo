@@ -44,6 +44,7 @@ SUBCOMMAND_MAP = {
     'revert': 'RevertCommand',
     'rm': 'DeleteCommand',
     'sort': 'SortCommand',
+    'stats': 'StatsCommand',
     'tag': 'TagCommand',
 }
 

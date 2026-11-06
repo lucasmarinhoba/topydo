@@ -27,7 +27,7 @@ from topydo.lib.TopydoString import TopydoString
 
 MAIN_OPTS = "ac:C:d:ht:v"
 MAIN_LONG_OPTS = ('version')
-READ_ONLY_COMMANDS = ('list', 'listcontext', 'listproject')
+READ_ONLY_COMMANDS = ('list', 'listcontext', 'listproject', 'stats')
 
 GENERIC_HELP="""Available commands:
 
@@ -46,6 +46,7 @@ GENERIC_HELP="""Available commands:
 * pri
 * revert
 * sort
+* stats
 * tag
 
 Run `topydo help <subcommand>` for command-specific help.\
