@@ -2,214 +2,292 @@
 marp: true
 theme: default
 paginate: true
-header: "Topydo — Implementação do Subcomando `stats` | Atividade 04"
-footer: "Lucas Marinho — Engenharia de Software"
+header: "Topydo — Filosofia, Arquitetura e Subcomando `stats` | Atividade 04"
+footer: "Tópicos Avançados em Ciência da Computação — Prof. Andrei Formiga"
 ---
 
-# 📊 Implementação do Subcomando `topydo stats`
-## Manutenção de Software Livre e Engenharia de Software com IA
+# 📊 Topydo & Novo Subcomando `stats`
+## Manutenção em Software Livre e Engenharia de Software com IA
 
-**Projeto:** [topydo](https://github.com/topydo/topydo) (Python / todo.txt)  
-**Autor:** Lucas Marinho  
-**Disciplina:** Tópicos Avançados em Engenharia de Software  
-**Professor:** Andrei Formiga  
-
----
-
-## 🎯 1. Contexto e Objetivo da Atividade
-
-* **Projeto Escolhido:** `topydo` — Gerenciador CLI/TUI de tarefas em Python baseado no padrão mundial *todo.txt*.
-* **Desafio da Atividade 04:** Executar na prática a melhoria de software planejada na Atividade 03, mantendo integridade total do sistema legado.
-* **A Melhoria:** Criação do subcomando **`stats`**, fornecendo um sumário analítico e métricas em tempo real sobre a lista de tarefas.
-* **Metodologia:** Desenvolvimento assistido por agente inteligente de IA, com rigorosa cobertura de testes unitários e respeito aos padrões arquiteturais do projeto.
-
-> 🗣️ **O que falar:** *"O topydo é um projeto consolidado de software livre que gerencia tarefas complexas. Na Atividade 03 identificamos que não havia nenhum comando nativo para resumir métricas. Na Atividade 04, implementamos e testamos essa solução de ponta a ponta."*
+**Projeto:** [topydo](https://github.com/topydo/topydo) (Python / padrão *todo.txt*)  
+**Fork do Trabalho:** [lucasmarinhoba/topydo](https://github.com/lucasmarinhoba/topydo)  
+**Grupo:** Guilherme Peixoto Gurgel, João Pedro Figueiredo Chaves, Lucas Marinho Basilio de Sousa, Yuri Silva Bezerra de Lima  
+**Disciplina:** Tópicos Avançados em Ciência da Computação — Prof. Andrei Formiga  
 
 ---
 
-## 🔍 2. O Problema: Ausência de Visão Consolidada
+## 🧩 1. O que é o `topydo` e a Filosofia *todo.txt*
 
-* O `topydo` possuía comandos de listagem avançados (`ls`, `ls -x`, `ls -f json/ical/dot`), filtros por prioridade e visualização em colunas.
-* **Limitações encontradas:**
-  1. O comando `lsprj` lista apenas os *nomes* dos projetos cadastrados, sem quantificar tarefas.
-  2. Não havia resposta rápida para: *"Quantas tarefas faltam?"*, *"Quantas estão atrasadas?"*, *"Como meus projetos estão distribuídos?"*.
-  3. O usuário precisava inspecionar listas longas manualmente ou recorrer a scripts externos.
+* **Software Livre em Python (GPLv3):** Gerenciador de tarefas leve, extensível e focado em produtividade via terminal.
+* **Padrão `todo.txt` (Texto Puro):**
+  * Sem banco de dados binário ou proprietário — toda a base cabe em um arquivo `.txt`.
+  * **Legível por humanos** em qualquer editor de texto e **versionável** com Git.
+  * Portável entre sistemas e ferramentas.
+* **Três Modos de Operação:**
+  1. **CLI Tradicional:** Comandos pontuais no shell (`topydo ls`, `topydo add`, `topydo stats`).
+  2. **Prompt Interativo:** Shell contínuo (`topydo prompt`) com histórico e autocompletar.
+  3. **Modo Colunas (TUI):** Painel visual estilo Kanban no terminal com `urwid` e atualização em tempo real via `watchdog` (ao editar o arquivo em outro terminal, as colunas atualizam sozinhas).
 
-> 🗣️ **O que falar:** *"Embora o topydo fosse excelente para organizar itens, faltava um dashboard rápido de produtividade. Foi essa lacuna que o comando stats veio preencher."*
+> 🗣️ **O que falar:** *"Antes de mostrar o que criamos, vale entender o topydo: ele segue a filosofia todo.txt, onde todo o banco de dados é texto puro. Mesmo sendo texto simples, ele entrega uma interface avançada em colunas com atualização automática em tempo real."*
 
 ---
 
-## 🚀 3. A Nova Funcionalidade: `topydo stats`
+## 🔬 2. Anatomia de uma Tarefa no `topydo`
 
-O novo subcomando calcula e exibe de forma clara:
-1. **Total de tarefas** (`Total tasks`);
-2. **Tarefas concluídas** (`Completed`, marcadas com `x`);
-3. **Tarefas pendentes** (`Pending`);
-4. **Tarefas atrasadas (*Overdue*)**: pendências com `due:` anterior à data de hoje;
-5. **Distribuição por projeto (`+projeto`)**: contagem ordenada alfabeticamente.
+Cada linha do arquivo `todo.txt` carrega metadados estruturados de forma legível:
 
 ```text
+x 2026-11-18 (A) 2026-11-01 Entregar relatório +Faculdade @computador due:2026-11-10 id:1
+```
+
+* **`x YYYY-MM-DD`:** Marca a tarefa como concluída e registra a data de conclusão.
+* **`(A)`, `(B)`, `(C)`:** Níveis de prioridade (de A até Z).
+* **`+Projeto`:** Agrupamento temático / projeto (ex.: `+Faculdade`, `+Trabalho`, `+Pessoal`).
+* **`@Contexto`:** Local, ferramenta ou situação de execução (ex.: `@computador`, `@financas`).
+* **Tags estendidas (`chave:valor`) nativas do `topydo`:**
+  * `due:YYYY-MM-DD`: Data de vencimento (aceita datas relativas como `tod`, `tom`, `1w`).
+  * `t:YYYY-MM-DD`: Data de início (*threshold*) — oculta a tarefa até chegar a data.
+  * `rec:1w` / `rec:1m`: Recorrência automática ao concluir.
+  * `id:N` e `p:N`: Grafo de dependências entre tarefas pai e subtarefas.
+  * `h:1`: Marcação de **tarefa oculta** (*hidden*) para rascunhos internos.
+
+---
+
+## ⚙️ 3. Mecanismos Internos Importantes do `topydo`
+
+Para compreender como o sistema se comporta ao vivo, dois conceitos internos são essenciais:
+
+### A. Auto-Arquivamento (`done.txt`) vs. Flag `-a`
+* Por padrão, ao concluir uma tarefa (`do`), o `topydo` marca com `x` e a **remove do `todo.txt`**, arquivando-a em `done.txt` para manter a lista limpa.
+* Ao iniciar com a flag **`-a`** (*do not archive*), as tarefas concluídas permanecem no `todo.txt`, permitindo contabilizá-las continuamente no `stats`.
+
+### B. Filtros Automáticos do Modo Colunas
+Por padrão, cada coluna aplica 3 filtros internos sobre a lista bruta:
+1. **`RelevanceFilter`:** Oculta tarefas já concluídas (`x`) e tarefas futuras (`t:` maior que hoje).
+2. **`DependencyFilter`:** Oculta tarefas pai (`id:N`) enquanto existirem subtarefas (`p:N`) pendentes.
+3. **`HiddenTagFilter`:** Oculta tarefas com a tag **`h:1`** da visualização padrão (só visíveis via `ls -x`).
+
+---
+
+## 🔍 4. O Problema e a Motivação do `topydo stats`
+
+* O `topydo` possuía filtros e exportadores (`ls -f json`, `ical`, `dot`), mas **nenhum resumo quantitativo**.
+* **Limitações identificadas na Atividade 03:**
+  * O comando nativo `lsprj` exibe apenas os *nomes* dos projetos (sem quantidade de tarefas).
+  * Não havia comando para responder rapidamente: *"Quantas tarefas estão concluídas?"*, *"Quantas estão atrasadas?"*, *"Qual o peso de cada projeto?"*.
+* **Solução Planejada e Implementada:** Criar o subcomando **`topydo stats`** seguindo rigorosamente a arquitetura original de comandos do projeto.
+
+---
+
+## 🚀 5. A Nova Funcionalidade (`topydo stats`) e Arquitetura
+
+### Saída Padronizada do Comando
+```text
 Todo List Statistics:
-  Total tasks: 10
+  Total tasks: 6
   Completed:   1
-  Pending:     9
-  Overdue:     1
+  Pending:     5
+  Overdue:     2
 
 Tasks by project:
-  +Faculdade: 4
-  +OpenSource: 1
-  +Pessoal: 3
+  +Faculdade: 3
+  +Pessoal: 1
   +Trabalho: 1
 ```
 
----
-
-## 🏗️ 4. Arquitetura e Boas Práticas
-
-Seguindo as diretrizes do `CONTRIBUTING.md` do repositório original:
-* **Funções pequenas com responsabilidade única:**
-  * `calculate_stats(p_todolist, p_reference_date=None)`: Função pura de negócio. Receber data de referência permite testes determinísticos sem depender do relógio do sistema.
-  * `format_stats(p_stats, p_lang='en')`: Função pura de apresentação com dicionário modular `LABELS` (suporte a inglês e português com fallback seguro).
-* **Padrão Command:** Classe `StatsCommand(Command)` plugada de forma desacoplada.
-* **Integração no Ecossistema:**
-  * Registrado em `SUBCOMMAND_MAP` ([Commands.py](file:///c:/Users/lucas/OneDrive/Documentos/GitHub/topydo/topydo/Commands.py)).
-  * Classificado como comando de leitura em `READ_ONLY_COMMANDS` ([CLIApplicationBase.py](file:///c:/Users/lucas/OneDrive/Documentos/GitHub/topydo/topydo/ui/CLIApplicationBase.py)).
+### Design Modular (seguindo o `CONTRIBUTING.md`)
+* **[`topydo/commands/StatsCommand.py`](file:///c:/Users/lucas/OneDrive/Documentos/GitHub/topydo/topydo/commands/StatsCommand.py):**
+  * `_is_overdue` e `_count_projects`: funções auxiliares curtas e de responsabilidade única.
+  * `calculate_stats(p_todolist, p_reference_date=None)`: lógica pura e determinística (aceita data de referência para testes sem depender do relógio).
+  * `format_stats(p_stats, p_lang='en')`: apresentação desacoplada com dicionário `LABELS` (inglês e português com fallback).
+  * `StatsCommand(Command)`: classe de comando seguindo a interface base do `topydo`.
+* **Integração:** Registrado em [`SUBCOMMAND_MAP`](file:///c:/Users/lucas/OneDrive/Documentos/GitHub/topydo/topydo/Commands.py#L47) e marcado em [`READ_ONLY_COMMANDS`](file:///c:/Users/lucas/OneDrive/Documentos/GitHub/topydo/topydo/ui/CLIApplicationBase.py#L30) (não altera arquivos nem cria backups).
 
 ---
 
-## 🧪 5. Estratégia de Testes Automatizados
+## 🧪 6. Qualidade e Testes Automatizados (`pytest`)
 
-* **Linha de Base Preservada:** Todos os **825 testes pré-existentes** continuam passando sem qualquer regressão.
-* **Nova Suíte de Testes:** Criado `test/test_stats_command.py` com **8 testes unitários** sem alterar nenhum arquivo de teste original:
-  1. Lista vazia (`test_stats_empty_list`);
-  2. Cálculo puro de métricas e tarefas atrasadas (`test_calculate_stats_metrics`);
-  3. Tratamento robusto de datas inválidas sem lançar exceções (`test_stats_invalid_due_dates`);
-  4. Execução ponta a ponta e ordenação case-insensitive (`test_stats_execution_with_tasks`);
-  5. Consulta de ajuda do comando (`test_stats_help`);
-  6. Internacionalização em português (`test_format_stats_portuguese`);
-  7. Fallback seguro para idiomas desconhecidos (`test_format_stats_invalid_language_fallback`);
-  8. Roteamento do subcomando (`test_stats_subcommand_registration`).
+* **Zero Regressão na Linha de Base:** Todos os **825 testes originais** do repositório permanecem passando no ambiente Linux/WSL.
+* **Nova Suíte em [`test/test_stats_command.py`](file:///c:/Users/lucas/OneDrive/Documentos/GitHub/topydo/test/test_stats_command.py) (8/8 aprovados):**
+  1. `test_stats_empty_list` — lista vazia (`Total tasks: 0`, `Projects: none`);
+  2. `test_calculate_stats_metrics` — total, concluídas, pendentes, atrasadas e projetos (com data fixa);
+  3. `test_stats_invalid_due_dates` — tolerância a datas malformadas sem lançar exceções;
+  4. `test_stats_execution_with_tasks` — execução ponta a ponta e ordenação case-insensitive;
+  5. `test_stats_help` — saída de ajuda `stats help`;
+  6. `test_format_stats_portuguese` — formatação com `lang='pt'`;
+  7. `test_format_stats_invalid_language_fallback` — fallback seguro para inglês;
+  8. `test_stats_subcommand_registration` — validação do roteador `get_subcommand` e `is_read_only`.
 
 ---
 
-## 🖥️ 6. Preparação para a Demonstração ao Vivo
+## 🖥️ 7. Preparação da Demo ao Vivo (Modo Colunas no WSL)
 
-O modo colunas do `topydo` utiliza a biblioteca `urwid` (interface de terminal rica em POSIX/ANSI).
+O modo colunas usa `urwid` (POSIX/ANSI), executado via **WSL 2 (Ubuntu)**:
 
-### Como inicializar o ambiente de apresentação (no WSL 2 / Ubuntu):
+### Passo 0 — Abrir o terminal Ubuntu correto no PowerShell:
+> ⚠️ Digite sempre `wsl -d Ubuntu` (se digitar só `wsl`, pode cair na distro padrão `docker-desktop` em `/mnt/host/c/` onde o `.venv` não existe).
+```powershell
+wsl -d Ubuntu
+```
+
+### Passo 1 — Entrar no projeto e iniciar o Modo Colunas com `-a`:
 ```bash
-# 1. Navegar até a pasta do projeto:
 cd "/mnt/c/Users/lucas/OneDrive/Documentos/GitHub/topydo"
-
-# 2. Ativar o ambiente virtual:
 source .venv/bin/activate
-
-# 3. Iniciar o modo colunas com a base oficial de testes:
 python -m topydo.ui.UILoader -a -t meus_teste_topydo/todo.txt columns
 ```
 
-> 💡 **Nota sobre a flag `-a`:** Desativa o auto-arquivamento imediato para `done.txt`, permitindo que as tarefas concluídas durante a demo permaneçam visíveis no `stats`.
+### Como operar os comandos dentro do Modo Colunas:
+* **Navegação:** Setas ou `j`/`k` (vertical) e `h`/`l` (entre colunas) | **`x`**: conclui tarefa | **`q`**: sai.
+* **Rodapé de comandos:** Pressione **`:`** para abrir `topydo> ` e digite o comando **sem repetir o `:`**.
+* **Popups de saída (`stats`, `ls -x`):** Pressione **`Esc`** ou **`Enter`** para fechar o console e voltar às colunas.
 
 ---
 
-## 🕹️ 7. Navegação e Comandos no Modo Colunas
+## 🎬 8. Demo — Ato 1: Visão Inicial e Primeiro `stats`
 
-Na interface gráfica em colunas:
-* **Navegação rápida:** Setas ou teclas `j`/`k` (sobe/desce) e `h`/`l` (troca de coluna).
-* **Para digitar comandos:** Pressione a tecla **`:`** (dois pontos).
-  * O rodapé abrirá o prompt: `topydo> `
-  * **Atenção:** Digite os comandos diretamente (sem digitar outro `:` inicial).
-  * Quando o comando abre um popup (como o `stats`), pressione **`Esc`** ou **`Enter`** para fechar e voltar às colunas.
+O arquivo limpo [`meus_teste_topydo/todo.txt`](file:///c:/Users/lucas/OneDrive/Documentos/GitHub/topydo/meus_teste_topydo/todo.txt) começa com **6 tarefas**:
+* Coluna **"All tasks"**: exibe **4 tarefas visíveis**.
+* Coluna **"Overdue tasks"**: exibe **2 tarefas atrasadas** (`due:2026-11-10` e `due:2026-11-05`).
+
+### No rodapé das colunas, pressione `:` e execute:
+```text
+topydo> stats
+```
+
+### Saída exibida no popup:
+```text
+Todo List Statistics:
+  Total tasks: 6
+  Completed:   1
+  Pending:     5
+  Overdue:     2
+
+Tasks by project:
+  +Faculdade: 3
+  +Pessoal: 1
+  +Trabalho: 1
+```
+
+> 🗣️ **O que destacar:** *"Reparem em duas curiosidades: (1) A soma dos projetos dá 5 porque uma tarefa não tem `+projeto` (no todo.txt é opcional); (2) O `stats` acusa **5 pendentes**, mas na coluna só vemos **4**. Guardem esse detalhe para o final!"*
+
+*(Pressione `Esc` para voltar às colunas).*
 
 ---
 
-## 🎬 8. Demonstração Prática 1: Executando o `stats`
+## 🎬 9. Demo — Ato 2: Adicionando Tarefa Atrasada (+Novo Projeto)
 
-### Passo a passo no rodapé do modo colunas:
-1. Pressione **`:`**
-2. Digite:
+### No rodapé das colunas, pressione `:` e execute:
+```text
+topydo> add (A) Entregar slides finais +Apresentacao @faculdade due:2026-10-01
+```
+
+* O cartão aparece **imediatamente** tanto na coluna **"All tasks"** quanto na coluna **"Overdue tasks"**.
+
+### Consulte as estatísticas novamente (`:` → `stats` → Enter):
+```text
+Todo List Statistics:
+  Total tasks: 7
+  Completed:   1
+  Pending:     6
+  Overdue:     3
+
+Tasks by project:
+  +Apresentacao: 1
+  +Faculdade: 3
+  +Pessoal: 1
+  +Trabalho: 1
+```
+
+* **Total** subiu para `7`, **Pending** para `6`, **Overdue** para `3`, e **`+Apresentacao: 1`** surgiu automaticamente em ordem alfabética!
+
+*(Pressione `Esc` para voltar às colunas).*
+
+---
+
+## 🎬 10. Demo — Ato 3: Alterando Prioridades e Navegando
+
+Além de consultar estatísticas, todos os comandos do `topydo` funcionam no rodapé do modo colunas e refletem na hora:
+
+### No rodapé, pressione `:` e eleve a prioridade da tarefa 4 para `(A)`:
+```text
+topydo> pri 4 A
+```
+
+* A tarefa **`Revisar documentação técnica +Trabalho`** recebe prioridade `(A)` e se reposiciona no topo da coluna de acordo com a ordenação visual.
+
+---
+
+## 🎬 11. Demo — Ato 4: Concluindo Todas as Tarefas Visíveis
+
+Agora vamos limpar todas as tarefas visíveis na tela!
+
+### Escolha uma das duas formas nas colunas:
+* **Pelo atalho de teclado:** Selecione cada uma das **5 tarefas visíveis** na coluna `"All tasks"` usando `j`/`k` e pressione **`x`** em cada uma.
+* **Ou pelo rodapé em um só comando** (`:` → Enter):
+  ```text
+  topydo> do 1 2 3 4 7
+  ```
+
+### Resultado Visual na Tela:
+* Todas as colunas (**"All tasks"**, **"Due today"** e **"Overdue tasks"**) ficam **100% vazias**!
+
+> 🗣️ **O que falar:** *"Olhando para a interface visual, parece que finalizamos 100% do nosso trabalho do dia, certo? Vamos confirmar no `stats`!"*
+
+---
+
+## 🕵️ 12. Demo — Ato 5 (Gran Finale): O Mistério da Tarefa Oculta (`h:1`)
+
+Com a tela aparentemente vazia, pressione **`:`** e execute:
+```text
+topydo> stats
+```
+
+### Saída surpreendente no popup:
+```text
+Todo List Statistics:
+  Total tasks: 7
+  Completed:   6
+  Pending:     1
+  Overdue:     0
+```
+
+* **Por que ainda existe `Pending: 1` se a tela está vazia?** Porque há uma tarefa marcada com a tag **`h:1`** (*hidden*), ocultada automaticamente pelo `HiddenTagFilter` das colunas! *(Pressione `Esc` para fechar o popup).*
+
+### Vamos revelar e concluir essa tarefa oculta ao vivo:
+1. **Prove onde ela está** listando inclusive tarefas ocultas/concluídas (`:` → Enter → `Esc`):
    ```text
-   topydo> stats
+   topydo> ls -x
    ```
-3. Pressione **Enter**.
-
-### O que mostrar na tela:
-* Uma janela sobreposta (*popup*) se abrirá exibindo o resumo estatístico consolidado:
-  * Total de tarefas, pendências e tarefas atrasadas;
-  * A distribuição de cada projeto (`+Faculdade`, `+Pessoal`, `+Trabalho`, etc.).
-* Pressione **`Esc`** para fechar a janela.
-
----
-
-## 🎬 9. Demonstração Prática 2: Adicionando Tarefa Atrasada
-
-### Passo a passo no rodapé:
-1. Pressione **`:`**
-2. Adicione uma tarefa urgente com prazo vencido:
+   *(Mostra a linha `6: Rascunho oculto de melhorias futuras h:1`)*.
+2. **Remova a tag de ocultação `h:1`** pelo rodapé (`:` → Enter → `Esc`):
    ```text
-   topydo> add (A) Revisar artigo do simpósio +Faculdade @estudos due:2026-10-01
+   topydo> tag 6 h
    ```
-3. Pressione **Enter**.
-4. Abra o `stats` novamente (`:` → `stats` → Enter):
-   * O total de tarefas incrementou (+1).
-   * O contador **`Overdue`** subiu em 1.
-   * O projeto **`+Faculdade`** aumentou a contagem imediatamente.
+   *(A tarefa aparece **instantaneamente** na coluna `"All tasks"` que estava vazia!)*.
+3. **Conclua a tarefa** apertando **`x`** sobre ela e rode `:` → `stats`:
+   * Resultado final: **`Total tasks: 7 | Completed: 7 | Pending: 0 | Overdue: 0`**!
 
 ---
 
-## 🎬 10. Demonstração Prática 3: Concluindo Tarefa (`do`)
+## 🤖 13. Desafios Superados e Experiência com IA
 
-### Passo a passo no rodapé:
-1. Selecione ou identifique o ID da tarefa atrasada.
-2. Pressione **`:`** e conclua a tarefa:
-   ```text
-   topydo> do <ID>
-   ```
-   *(Ou simplesmente posicione o cursor sobre ela e aperte a tecla de atalho **`x`**)*.
-3. Consulte as estatísticas atualizadas (`:` → `stats` → Enter):
-   * **`Completed`** subiu em 1.
-   * **`Pending`** diminuiu em 1.
-   * **`Overdue`** diminuiu em 1 (comprovando que tarefas concluídas **não** são computadas como atrasadas!).
+### Principais Desafios Técnicos Descobertos e Resolvidos
+1. **Integração com `TopydoString` na CLI:** O `output()` esperava objetos `TopydoString` quando recebia listas; corrigimos iterando linha por linha no `StatsCommand.py`.
+2. **Comportamento do Auto-Archive:** Compreendemos que `do` arquiva no `done.txt` por padrão e documentamos a flag `-a` para manter estatísticas históricas em `todo.txt`.
+3. **Sintaxe do Modo Colunas & Ambiente:** Identificamos que o rodapé `topydo> ` dispensa o `:` extra e que o `urwid` requer Linux/WSL (`wsl -d Ubuntu`).
+
+### Experiência de *Pair Programming* com Agente de IA
+* **Ganhos:** Leitura rápida de código legado, separação limpa entre negócio e formatação, criação de suíte determinística de 8 testes e agilidade na depuração.
+* **Papel Humano:** Validar cenários reais no modo colunas, identificar divergências visuais (`lsprj`, `sort`, tarefas ocultas/bloqueadas) e orientar as decisões arquiteturais.
 
 ---
 
-## 💡 11. Desafios Arquiteturais Superados
+## 🏁 14. Conclusão
 
-1. **Auto-Arquivamento Nativo (*Auto-Archive*):**
-   * Por padrão, o `topydo do` transfere concluídas para o `done.txt`. Descobrimos o papel da flag `-a` para persistir os itens no `todo.txt` e refletir em `Completed`.
-2. **Grafo de Dependências (`id:` e `p:`):**
-   * Tarefas que possuem dependências pendentes são ocultadas da tela pelo `DependencyFilter` até que os filhos sejam concluídos.
-3. **Tratamento de Exceções de Console:**
-   * Ajuste do método `execute()` para iterar sobre linhas individuais, respeitando a integração com `TopydoString` da CLI.
+* ✅ Subcomando **`topydo stats`** entregue seguindo os padrões e estilo do projeto original.
+* ✅ Arquitetura testável com cálculo desacoplado da formatação e suporte multilíngue (`en`/`pt`).
+* ✅ **825 testes originais** intactos + **8 novos testes unitários** 100% aprovados.
+* ✅ Compatibilidade total validada via **CLI** e ao vivo no **Modo Colunas**.
 
----
-
-## 🤖 12. Relatório da Experiência com Agentes de IA
-
-* **O que funcionou muito bem:**
-  * Leitura e compreensão ágil de um repositório legado desconhecido.
-  * Estruturação de testes unitários determinísticos e isolamento de efeitos colaterais.
-  * Agilidade na elaboração de datasets realistas e documentação formal.
-* **Lições Aprendidas:**
-  * O papel do engenheiro é guiar o agente nas decisões de negócio, validar os casos de teste e questionar divergências reais de comportamento.
-  * *Pair programming* com IA acelerou a entrega sem comprometer a qualidade do design de software.
-
----
-
-## 🏁 13. Conclusão
-
-* **Requisitos Atendidos:**
-  * ✅ Subcomando `stats` implementado com sucesso.
-  * ✅ Separação nítida entre lógica de cálculo e formatação.
-  * ✅ 100% de aprovação na suíte de testes (legada e nova).
-  * ✅ Compatibilidade total com a CLI tradicional e com o **Modo Colunas**.
-  * ✅ Relatório técnico e documentação entregues no repositório.
-
-**Repositório do Fork:** [github.com/lucasmarinhoba/topydo](https://github.com/lucasmarinhoba/topydo)
-
----
-
-# ❓ Perguntas & Respostas
-
-### Obrigado pela atenção!
-**Dúvidas ou comentários?**
+**Obrigado pela atenção! Perguntas?**
